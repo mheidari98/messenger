@@ -1,0 +1,46 @@
+version: "3.9"
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: ./Dockerfile
+    image: messenger
+    container_name: messenger
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=myuser
+      - DB_PASS="myPassword"
+      - DB_NAME=messenger
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - "db"    # start db before app
+    links:
+      - "db:db" # resolve the hostname "db" with the ip of the db container
+    networks:
+      - customNetwork
+    expose:
+      - 8080
+  db:
+    image: "mysql:8.0.25"
+    container_name: myapp_db
+    restart: always
+    command: mysqld --default-authentication-plugin=mysql_native_password 
+    networks:
+      - customNetwork
+    environment:
+      - "MYSQL_ROOT_PASSWORD=root"
+      - "MYSQL_USER=myuser"
+      - MYSQL_PASSWORD="myPassword"
+      - "MYSQL_DATABASE=messenger"
+    volumes:
+      - "./messenger.sql:/docker-entrypoint-initdb.d/init.sql"
+    ports:
+      - "3306:3306"
+
+networks:
+  customNetwork:
+    name: customNetwork
+    driver: bridge
