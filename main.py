@@ -10,12 +10,19 @@ import tornado.web
 import torndb
 from tornado.options import define, options
 
-define("port", default=1104, help="run on the given port", type=int)
-define("mysql_host", default="127.0.0.1:3306", help="messenger database host")
-define("mysql_database", default="messenger", help="messenger database name")
-define("mysql_user", default="root", help="messenger database user")
-define("mysql_password", default=":D", help="messenger database password")
+define("port", default=8080, help="run on the given port", type=int)
 
+DB_IP = os.environ.get('DB_HOST', '127.0.0.1')
+DB_PORT = os.environ.get('DB_PORT', '3306')
+DB_HOST = DB_IP + ':' + DB_PORT
+DB_NAME = os.environ.get('DB_NAME', 'messenger')
+DB_USER = os.environ.get('DB_USER', 'root')
+DB_PASS = os.environ.get('DB_PASS', ':D')
+
+def get_db():
+    return torndb.Connection(
+                host=DB_HOST, database=DB_NAME, 
+                user=DB_USER, password=DB_PASS)
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -43,9 +50,7 @@ class Application(tornado.web.Application):
         ]
         settings = dict()
         super(Application, self).__init__(handlers, **settings)
-        self.db = torndb.Connection(
-            host=options.mysql_host, database=options.mysql_database,
-            user=options.mysql_user, password=options.mysql_password)
+        self.db = get_db()
 
 
 class BaseHandler(tornado.web.RequestHandler):
